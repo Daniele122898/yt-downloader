@@ -12,12 +12,14 @@ namespace YtDownloader.Services
 {
     public class DownloaderService
     {
+        private readonly CacheService _cacheService;
         private const string _YT_DL_PATH = @".\Binaries\youtube-dl.exe";
         private const string _FFMPEG_PATH = "./Binaries/ffmpeg.exe";
         private readonly string _outputPath;
 
-        public DownloaderService(IOptions<DownloadConfig> downloadConfig)
+        public DownloaderService(IOptions<DownloadConfig> downloadConfig, CacheService cacheService)
         {
+            _cacheService = cacheService;
             _outputPath = downloadConfig?.Value?.OutputPath ?? "./OutputFiles";
         }
 
@@ -34,6 +36,8 @@ namespace YtDownloader.Services
                 return new Result<string, Error>(new Error("Not a valid YT link"));
             
             // Check Cache first
+            if (_cacheService.TryGetFile(~ytId, out var cachedFilePath))
+                return new Result<string, Error>(cachedFilePath);
 
             var jsonCheck = this.YtJsonDownload(url);
             using var ytJsonProc = Process.Start(jsonCheck);
@@ -64,6 +68,9 @@ namespace YtDownloader.Services
                 }
                 return new Result<string, Error>(new Error("Failed to download video"));
             }
+            
+            // Add to cache service
+            _cacheService.TryAddFile(~ytId, filePath);
 
             return filePath;
         }
