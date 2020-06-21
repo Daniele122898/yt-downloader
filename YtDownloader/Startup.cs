@@ -10,9 +10,11 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
 using YtDownloader.Configurations;
 using YtDownloader.Extensions;
+using YtDownloader.Helper;
 using YtDownloader.Services;
 
 namespace YtDownloader
@@ -61,8 +63,13 @@ namespace YtDownloader
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, CacheService cacheService)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, IOptions<DownloadConfig> downloadConfig)
         {
+            string path = Path.Combine(env.ContentRootPath, downloadConfig.Value.OutputPath);
+            PathHelper.SetOutputPath(path);
+
+            app.ApplicationServices.GetRequiredService<CacheService>(); // Warmup service
+            
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();

@@ -5,6 +5,7 @@ using System.Threading;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using YtDownloader.Configurations;
+using YtDownloader.Helper;
 
 namespace YtDownloader.Services
 {
@@ -22,15 +23,14 @@ namespace YtDownloader.Services
             ILogger<CacheService> log)
         {
             _log = log;
-            var outputPath = downloadConfig?.Value?.OutputPath ?? "./OutputFiles";
             var cleanupCooldownHours = downloadConfig?.Value?.CleanupCooldownHours ?? 24;
 
-            if (!Directory.Exists(outputPath))
-                throw new DirectoryNotFoundException($"Couldn't find Output directory at: {outputPath}!");
+            if (!Directory.Exists(PathHelper.OutputPath))
+                throw new DirectoryNotFoundException($"Couldn't find Output directory at: {PathHelper.OutputPath}!");
 
             // Clean directory on restart
             _log.LogInformation("Cleaning Output directory...");
-            foreach (var file in Directory.EnumerateFiles(outputPath))
+            foreach (var file in Directory.EnumerateFiles(PathHelper.OutputPath))
             {
                 File.Delete(file);
             }
@@ -47,8 +47,9 @@ namespace YtDownloader.Services
             _fileMap.Clear();
             foreach (var file in values)
             {
-                if (File.Exists(file))
-                    File.Delete(file);
+                string path = PathHelper.GenerateFilePath(file);
+                if (File.Exists(path))
+                    File.Delete(path);
             }
             _log.LogInformation("Finished file cleanup...");
         }

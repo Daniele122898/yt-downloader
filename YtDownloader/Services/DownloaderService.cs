@@ -4,9 +4,8 @@ using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
 using ArgonautCore.Lw;
-using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
-using YtDownloader.Configurations;
+using YtDownloader.Helper;
 
 namespace YtDownloader.Services
 {
@@ -15,12 +14,10 @@ namespace YtDownloader.Services
         private readonly CacheService _cacheService;
         private const string _YT_DL_PATH = @".\Binaries\youtube-dl.exe";
         private const string _FFMPEG_PATH = "./Binaries/ffmpeg.exe";
-        private readonly string _outputPath;
 
-        public DownloaderService(IOptions<DownloadConfig> downloadConfig, CacheService cacheService)
+        public DownloaderService(CacheService cacheService)
         {
             _cacheService = cacheService;
-            _outputPath = downloadConfig?.Value?.OutputPath ?? "./OutputFiles";
         }
 
         public async Task<Result<string, Error>> TryDownloadAsync(string url)
@@ -59,10 +56,11 @@ namespace YtDownloader.Services
                 return new Result<string, Error>(new Error("Failed to download video"));
             ytDlProc.WaitForExit();
 
-            string filePath = $"{_outputPath}/{~ytId}.mp3";
+            string fileName = $"{~ytId}.mp3";
+            string filePath = PathHelper.GenerateFilePath(fileName);
             if (!File.Exists(filePath))
             {
-                foreach (var file in Directory.EnumerateFiles($"{_outputPath}/*{~ytId}*"))
+                foreach (var file in Directory.EnumerateFiles($"{PathHelper.OutputPath}/*{~ytId}*"))
                 {
                     File.Delete(file);
                 }
@@ -70,9 +68,9 @@ namespace YtDownloader.Services
             }
             
             // Add to cache service
-            _cacheService.TryAddFile(~ytId, filePath);
+            _cacheService.TryAddFile(~ytId, fileName);
 
-            return filePath;
+            return fileName;
         }
 
         private string CleanYtLink(string url)
@@ -103,7 +101,7 @@ namespace YtDownloader.Services
                 FileName = _YT_DL_PATH,
                 Arguments =
                     $"-i -x --no-playlist --max-filesize 100m --audio-format mp3 --audio-quality 0 " +
-                    $"--output \"{_outputPath}/{name}.%(ext)s\"  {url} --ffmpeg-location {_FFMPEG_PATH}"
+                    $"--output \"{PathHelper.OutputPath}/{name}.%(ext)s\"  {url} --ffmpeg-location {_FFMPEG_PATH}"
             };
         
         
