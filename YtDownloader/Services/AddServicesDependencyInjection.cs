@@ -8,6 +8,7 @@ namespace YtDownloader.Services
         public static IServiceCollection AddServices(this IServiceCollection services, IConfiguration configs)
             => services
                 .AddScoped<DownloaderService>()
-                .AddSingleton<CacheService>();
+                .AddSingleton<CacheService>()
+                .AddSingleton<MetaDataService>();
     }
 }

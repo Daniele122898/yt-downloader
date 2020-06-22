@@ -5,6 +5,7 @@ using System.Threading;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using YtDownloader.Configurations;
+using YtDownloader.Dtos;
 using YtDownloader.Helper;
 
 namespace YtDownloader.Services
@@ -12,7 +13,7 @@ namespace YtDownloader.Services
     public class CacheService
     {
         private readonly ILogger<CacheService> _log;
-        private readonly ConcurrentDictionary<string, string> _fileMap = new ConcurrentDictionary<string, string>();
+        private readonly ConcurrentDictionary<string, VideoInfo> _fileMap = new ConcurrentDictionary<string, VideoInfo>();
         
         
         // ReSharper disable once NotAccessedField.Local
@@ -47,17 +48,17 @@ namespace YtDownloader.Services
             _fileMap.Clear();
             foreach (var file in values)
             {
-                string path = PathHelper.GenerateFilePath(file);
+                string path = PathHelper.GenerateFilePath(file.FileName);
                 if (File.Exists(path))
                     File.Delete(path);
             }
             _log.LogInformation("Finished file cleanup...");
         }
 
-        public bool TryGetFile(string ytId, out string path)
-            => _fileMap.TryGetValue(ytId, out path);
+        public bool TryGetFile(string ytId, out VideoInfo info)
+            => _fileMap.TryGetValue(ytId, out info);
 
-        public bool TryAddFile(string ytId, string path)
-            => _fileMap.TryAdd(ytId, path);
+        public bool TryAddFile(string ytId, VideoInfo info)
+            => _fileMap.TryAdd(ytId, info);
     }
 }

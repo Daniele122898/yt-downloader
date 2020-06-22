@@ -5,6 +5,7 @@ using System.IO;
 using System.Threading.Tasks;
 using ArgonautCore.Lw;
 using Newtonsoft.Json.Linq;
+using YtDownloader.Dtos;
 using YtDownloader.Helper;
 
 namespace YtDownloader.Services
@@ -20,40 +21,46 @@ namespace YtDownloader.Services
             _cacheService = cacheService;
         }
 
-        public async Task<Result<string, Error>> TryDownloadAsync(string url)
+        /// <summary>
+        /// Tries to download and convert video and return Filename with extension 
+        /// </summary>
+        public async Task<Result<VideoInfo, Error>> TryDownloadAsync(string url)
             => await Task.Run(async () => await this.TryDownload(url));
         
-        public async Task<Result<string, Error>> TryDownload(string url)
+        /// <summary>
+        /// Tries to download and convert video and return Filename with extension 
+        /// </summary>
+        public async Task<Result<VideoInfo, Error>> TryDownload(string url)
         {
             await Task.Yield(); // Force a new thread.
             
             url = this.CleanYtLink(url);
             var ytId = this.GetYoutubeId(url);
             if (!ytId)
-                return new Result<string, Error>(new Error("Not a valid YT link"));
+                return new Result<VideoInfo, Error>(new Error("Not a valid YT link"));
             
             // Check Cache first
             if (_cacheService.TryGetFile(~ytId, out var cachedFilePath))
-                return new Result<string, Error>(cachedFilePath);
+                return new Result<VideoInfo, Error>(cachedFilePath);
 
             var jsonCheck = this.YtJsonDownload(url);
             using var ytJsonProc = Process.Start(jsonCheck);
             if (ytJsonProc == null)
-                return new Result<string, Error>(new Error("Failed to fetch video JSON info"));
+                return new Result<VideoInfo, Error>(new Error("Failed to fetch video JSON info"));
 
             string output = await ytJsonProc.StandardOutput.ReadToEndAsync();
             ytJsonProc.WaitForExit();
             if (ytJsonProc.ExitCode != 0) 
-                return new Result<string, Error>(new Error("Failed to fetch video JSON info"));
+                return new Result<VideoInfo, Error>(new Error("Failed to fetch video JSON info"));
 
             IDictionary<string, JToken> jsonDict = JObject.Parse(output);
             if (jsonDict.ContainsKey("is_live") && !string.IsNullOrWhiteSpace(jsonDict["is_live"].Value<string>()))
-                return new Result<string, Error>(new Error("Livestreams are not allowed"));
+                return new Result<VideoInfo, Error>(new Error("Livestreams are not allowed"));
 
             var ytdlInfo = this.YtDl(url, ~ytId);
             using var ytDlProc = Process.Start(ytdlInfo);
             if (ytDlProc == null)
-                return new Result<string, Error>(new Error("Failed to download video"));
+                return new Result<VideoInfo, Error>(new Error("Failed to download video"));
             ytDlProc.WaitForExit();
 
             string fileName = $"{~ytId}.mp3";
@@ -64,13 +71,20 @@ namespace YtDownloader.Services
                 {
                     File.Delete(file);
                 }
-                return new Result<string, Error>(new Error("Failed to download video"));
+                return new Result<VideoInfo, Error>(new Error("Failed to download video"));
             }
+            string videoTitle = jsonDict["title"].Value<string>();
+            
+            var videoInfo = new VideoInfo()
+            {
+                VideoTitle = videoTitle,
+                FileName = fileName
+            };
             
             // Add to cache service
-            _cacheService.TryAddFile(~ytId, fileName);
+            _cacheService.TryAddFile(~ytId, videoInfo);
 
-            return fileName;
+            return videoInfo;
         }
 
         private string CleanYtLink(string url)
