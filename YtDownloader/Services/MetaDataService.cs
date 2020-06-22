@@ -1,8 +1,11 @@
 ﻿using System.IO;
+using TagLib;
+using TagLib.Id3v2;
 using YtDownloader.Dtos;
 using YtDownloader.Helper;
 using YtDownloader.Models;
 using YtDownloader.Models.Enums;
+using File = System.IO.File;
 
 namespace YtDownloader.Services
 {
@@ -23,6 +26,18 @@ namespace YtDownloader.Services
             {
                 tFile.Tag.Performers = new string[]{info.Artists};
             }
+
+            var imageBytes = File.ReadAllBytes(Path.Combine(PathHelper.OutputPath, "maxresdefault.jpg"));
+            TagLib.Id3v2.AttachedPictureFrame cover = new AttachedPictureFrame()
+            {
+                Type = TagLib.PictureType.FrontCover,
+                Description = "Cover",
+                MimeType = System.Net.Mime.MediaTypeNames.Image.Jpeg,
+                Data = imageBytes,
+                TextEncoding = TagLib.StringType.UTF16
+            };
+            
+            tFile.Tag.Pictures = new IPicture[]{ cover};
             
             tFile.Save();
         }
