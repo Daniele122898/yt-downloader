@@ -32,7 +32,7 @@ namespace YtDownloader.Controllers
             var videoInfo = res.Some();
             
             // Setup metadata
-            _metaDataService.WriteMetadata(videoInfo, downloadRequestDto.MetaDataInfo, downloadRequestDto.ConversionTarget);
+            await _metaDataService.WriteMetadata(videoInfo, downloadRequestDto.MetaDataInfo, downloadRequestDto.ConversionTarget);
 
             return CreatedAtRoute("GetFile", 
                 new {controller = "File", fileNameAndExtension = videoInfo.FileName}, videoInfo);

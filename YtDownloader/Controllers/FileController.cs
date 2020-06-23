@@ -19,8 +19,7 @@ namespace YtDownloader.Controllers
         [HttpGet("[controller]/{fileNameAndExtension}", Name = "GetFile")]
         public IActionResult GetFile(string fileNameAndExtension)
         {
-            string ytId = fileNameAndExtension.Remove(fileNameAndExtension.IndexOf('.'));
-            if (!_cacheService.TryGetFile(ytId, out var videoInfo) || !System.IO.File.Exists(PathHelper.GenerateFilePath(videoInfo.FileName)))
+            if (!_cacheService.TryGetFile(fileNameAndExtension, out var videoInfo) || !System.IO.File.Exists(PathHelper.GenerateFilePath(videoInfo.FileName)))
                 return NotFound();
 
             string path = PathHelper.GenerateFilePath(videoInfo.FileName);

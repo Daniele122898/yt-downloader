@@ -16,10 +16,16 @@ namespace YtDownloader.Services
         private readonly CacheService _cacheService;
         private const string _YT_DL_PATH = @".\Binaries\youtube-dl.exe";
         private const string _FFMPEG_PATH = "./Binaries/ffmpeg.exe";
-
+        private readonly string _cpuEncodeProcUsed;
+        
         public DownloaderService(CacheService cacheService)
         {
             _cacheService = cacheService;
+            #if DEBUG
+            _cpuEncodeProcUsed = Environment.ProcessorCount.ToString();
+            #else
+            _cpuEncodeProcUsed = Math.Min(1, Environment.ProcessorCount / 2).ToString();
+            #endif
         }
 
         /// <summary>
@@ -35,16 +41,17 @@ namespace YtDownloader.Services
         {
             await Task.Yield(); // Force a new thread.
             
-            url = this.CleanYtLink(url);
-            var ytId = this.GetYoutubeId(url);
+            url = CleanYtLink(url);
+            var ytId = GetYoutubeId(url);
             if (!ytId)
                 return new Result<VideoInfo, Error>(new Error("Not a valid YT link"));
             
+            string fileName = PathHelper.GenerateExtensionOnFilename(~ytId, target);
             // Check Cache first
-            if (_cacheService.TryGetFile(~ytId, out var cachedFilePath))
-                return new Result<VideoInfo, Error>(cachedFilePath);
+            if (_cacheService.TryGetFile(fileName, out var cachedVideoInfo))
+                return new Result<VideoInfo, Error>(cachedVideoInfo);
 
-            var jsonCheck = this.YtJsonDownload(url);
+            var jsonCheck = YtJsonDownload(url);
             using var ytJsonProc = Process.Start(jsonCheck);
             if (ytJsonProc == null)
                 return new Result<VideoInfo, Error>(new Error("Failed to fetch video JSON info"));
@@ -58,17 +65,17 @@ namespace YtDownloader.Services
             if (jsonDict.ContainsKey("is_live") && !string.IsNullOrWhiteSpace(jsonDict["is_live"].Value<string>()))
                 return new Result<VideoInfo, Error>(new Error("Livestreams are not allowed"));
 
-            var ytdlInfo = this.YtDl(url, ~ytId);
+            var ytdlInfo = YtDl(url, ~ytId, target);
             using var ytDlProc = Process.Start(ytdlInfo);
             if (ytDlProc == null)
                 return new Result<VideoInfo, Error>(new Error("Failed to download video"));
             ytDlProc.WaitForExit();
 
-            string fileName = PathHelper.GenerateExtensionOnFilename(~ytId, target);
             string filePath = PathHelper.GenerateFilePath(fileName);
             if (!File.Exists(filePath))
             {
-                foreach (var file in Directory.EnumerateFiles($"{PathHelper.OutputPath}/*{~ytId}*"))
+                var files = Directory.GetFiles(PathHelper.OutputPath, $"*{~ytId}*");
+                foreach (var file in files)
                 {
                     File.Delete(file);
                 }
@@ -83,12 +90,12 @@ namespace YtDownloader.Services
             };
             
             // Add to cache service
-            _cacheService.TryAddFile(~ytId, videoInfo);
+            _cacheService.TryAddFile(fileName, videoInfo);
 
             return videoInfo;
         }
 
-        private string CleanYtLink(string url)
+        private static string CleanYtLink(string url)
         {
             int index = url.IndexOf("&", StringComparison.Ordinal);
             if (index != -1)
@@ -96,7 +103,7 @@ namespace YtDownloader.Services
             return url;
         }
 
-        private Option<string> GetYoutubeId(string url)
+        private static Option<string> GetYoutubeId(string url)
         {
             int index = url.IndexOf("&", StringComparison.Ordinal);
             if (index != -1)
@@ -110,17 +117,29 @@ namespace YtDownloader.Services
             return Option.None<string>();
         }
 
-        private ProcessStartInfo YtDl(string url, string name)
+        private ProcessStartInfo YtDl(string url, string name, ConversionTarget target)
             => new ProcessStartInfo()
             {
                 FileName = _YT_DL_PATH,
-                Arguments =
-                    $"-i -x --no-playlist --max-filesize 100m --audio-format mp3 --audio-quality 0 " +
-                    $"--output \"{PathHelper.OutputPath}/{name}.%(ext)s\"  {url} --ffmpeg-location {_FFMPEG_PATH}"
+                Arguments = GenerateArgumentList(url, name, target)
+            };
+
+        private string GenerateArgumentList(string url, string name, ConversionTarget target, string res = "720")
+            => target switch
+            {
+                ConversionTarget.Mp3 =>
+                $"-i -x --no-playlist --max-filesize 100m --audio-format mp3 --audio-quality 0 " +
+                $"--output \"{PathHelper.OutputPath}/{name}.%(ext)s\"  {url} --ffmpeg-location {_FFMPEG_PATH}",
+
+                ConversionTarget.Mp4 => $"-f \"bestvideo[height<=?{res}][fps<=?60][vcodec!=?vp9]+bestaudio/best\" -i --no-playlist --max-filesize 500m " +
+                                        $"--audio-quality 0 --recode-video mp4 --output \"{PathHelper.OutputPath}/{name}.%(ext)s\" {url} " +
+                                        $"--ffmpeg-location \"{_FFMPEG_PATH}\" --postprocessor-args \"-threads {_cpuEncodeProcUsed}\"",
+                
+                _ => throw new ArgumentException($"Enum {nameof(target)} out of range.")
             };
         
         
-        private ProcessStartInfo YtJsonDownload(string url)
+        private static ProcessStartInfo YtJsonDownload(string url)
             => new ProcessStartInfo()
             {
                 FileName = _YT_DL_PATH,

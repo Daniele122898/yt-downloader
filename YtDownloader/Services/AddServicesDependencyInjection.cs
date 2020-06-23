@@ -9,6 +9,7 @@ namespace YtDownloader.Services
             => services
                 .AddScoped<DownloaderService>()
                 .AddSingleton<CacheService>()
-                .AddSingleton<MetaDataService>();
+                .AddSingleton<MetaDataService>()
+                .AddSingleton<HttpService>();
     }
 }

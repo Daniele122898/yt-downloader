@@ -18,7 +18,7 @@ namespace YtDownloader.Helper
         
         public static string GetFilenameWithoutExtension(string fileNameWithExt)
         {
-            int ind = fileNameWithExt.LastIndexOf(fileNameWithExt, StringComparison.Ordinal);
+            int ind = fileNameWithExt.LastIndexOf('.');
             if (ind < 0)
                 return null;
 

@@ -14,8 +14,8 @@ namespace YtDownloader.Services
     {
         private readonly ILogger<CacheService> _log;
         private readonly ConcurrentDictionary<string, VideoInfo> _fileMap = new ConcurrentDictionary<string, VideoInfo>();
-        
-        
+
+
         // ReSharper disable once NotAccessedField.Local
         private readonly Timer _timer;
 
@@ -55,10 +55,10 @@ namespace YtDownloader.Services
             _log.LogInformation("Finished file cleanup...");
         }
 
-        public bool TryGetFile(string ytId, out VideoInfo info)
-            => _fileMap.TryGetValue(ytId, out info);
+        public bool TryGetFile(string fileNameWithExtension, out VideoInfo info)
+            => _fileMap.TryGetValue(fileNameWithExtension, out info);
 
-        public bool TryAddFile(string ytId, VideoInfo info)
-            => _fileMap.TryAdd(ytId, info);
+        public bool TryAddFile(string fileNameWithExtension, VideoInfo info)
+            => _fileMap.TryAdd(fileNameWithExtension, info);
     }
 }

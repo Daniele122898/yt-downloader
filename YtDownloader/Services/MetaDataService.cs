@@ -1,4 +1,6 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
+using System.Threading.Tasks;
 using TagLib;
 using TagLib.Id3v2;
 using YtDownloader.Dtos;
@@ -11,7 +13,14 @@ namespace YtDownloader.Services
 {
     public class MetaDataService
     {
-        public void WriteMetadata(VideoInfo videoInfo, MetaDataInfo info, ConversionTarget target)
+        private readonly HttpService _httpService;
+
+        public MetaDataService(HttpService httpService)
+        {
+            _httpService = httpService;
+        }
+        
+        public async Task WriteMetadata(VideoInfo videoInfo, MetaDataInfo info, ConversionTarget target)
         {
             string filePath = PathHelper.GenerateFilePath(videoInfo.FileName);
             if (!File.Exists(filePath))
@@ -26,8 +35,32 @@ namespace YtDownloader.Services
             {
                 tFile.Tag.Performers = new string[]{info.Artists};
             }
-
-            var imageBytes = File.ReadAllBytes(Path.Combine(PathHelper.OutputPath, "maxresdefault.jpg"));
+            
+            // Check if we even have to fetch and download album art :)
+            if (tFile.Tag.Pictures?.Length > 0)
+            {
+                // Only fetch and set thumbnail once :)
+                tFile.Save();
+                return;
+            }
+            
+            // Fetch Youtube thumbnail
+            var ytId = PathHelper.GetFilenameWithoutExtension(videoInfo.FileName);
+            string imageName = $"{ytId}.jpg";
+            string imagePath = Path.Combine(PathHelper.OutputPath, imageName);
+            try
+            {
+                await _httpService.DownloadAndSaveFile(new Uri($"https://i.ytimg.com/vi/{ytId}/maxresdefault.jpg"), imagePath);
+            }
+            catch (Exception)
+            {
+                // If we fail to download the image just return without it it's fine...
+                tFile.Save();
+                return;
+            }
+            
+            // Add image as album cover :)
+            var imageBytes = File.ReadAllBytes(imagePath);
             TagLib.Id3v2.AttachedPictureFrame cover = new AttachedPictureFrame()
             {
                 Type = TagLib.PictureType.FrontCover,
@@ -40,6 +73,10 @@ namespace YtDownloader.Services
             tFile.Tag.Pictures = new IPicture[]{ cover};
             
             tFile.Save();
+            
+            // Remove file if it exists.
+            if (File.Exists(imagePath))
+                File.Delete(imagePath);
         }
 
         public string GetFileTitleFromMetadata(string path)
