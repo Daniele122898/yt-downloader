@@ -1,4 +1,6 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
+using YtDownloader.Models.Enums;
 
 namespace YtDownloader.Helper
 {
@@ -13,5 +15,22 @@ namespace YtDownloader.Helper
         {
             OutputPath = path;
         }
+        
+        public static string GetFilenameWithoutExtension(string fileNameWithExt)
+        {
+            int ind = fileNameWithExt.LastIndexOf(fileNameWithExt, StringComparison.Ordinal);
+            if (ind < 0)
+                return null;
+
+            return fileNameWithExt.Remove(ind);
+        }
+
+        public static string GenerateExtensionOnFilename(string filename, ConversionTarget target)
+            => target switch
+            {
+                ConversionTarget.Mp3 => $"{filename}.mp3",
+                ConversionTarget.Mp4 => $"{filename}.mp4",
+                _                    => throw new ArgumentException($"Not handled {nameof(ConversionTarget)} enum type.")
+            };
     }
 }

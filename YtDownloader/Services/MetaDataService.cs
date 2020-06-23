@@ -19,7 +19,7 @@ namespace YtDownloader.Services
 
             var tFile = TagLib.File.Create(filePath);
             tFile.Tag.Title = string.IsNullOrWhiteSpace(info?.Title)
-                ? (videoInfo.VideoTitle ?? videoInfo.FileName.Remove(videoInfo.FileName.IndexOf('.')))
+                ? (videoInfo.VideoTitle ?? PathHelper.GetFilenameWithoutExtension(videoInfo.FileName))
                 : info.Title;
 
             if (target == ConversionTarget.Mp3 && !string.IsNullOrWhiteSpace(info?.Artists))

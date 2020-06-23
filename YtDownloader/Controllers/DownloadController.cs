@@ -25,7 +25,7 @@ namespace YtDownloader.Controllers
             if (!Uri.IsWellFormedUriString(downloadRequestDto.Url, UriKind.RelativeOrAbsolute))
                 return BadRequest("Url must be well formed Uri string");
                 
-            var res = await _downloaderService.TryDownloadAsync(downloadRequestDto.Url);
+            var res = await _downloaderService.TryDownloadAsync(downloadRequestDto.Url, downloadRequestDto.ConversionTarget);
             if (res.HasError)
                 return BadRequest(res.Err().Message.Get());
 

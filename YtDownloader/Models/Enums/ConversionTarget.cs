@@ -2,7 +2,7 @@
 {
     public enum ConversionTarget
     {
-        Mp4,
-        Mp3
+        Mp3,
+        Mp4
     }
 }

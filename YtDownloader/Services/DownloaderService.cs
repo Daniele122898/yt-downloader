@@ -7,6 +7,7 @@ using ArgonautCore.Lw;
 using Newtonsoft.Json.Linq;
 using YtDownloader.Dtos;
 using YtDownloader.Helper;
+using YtDownloader.Models.Enums;
 
 namespace YtDownloader.Services
 {
@@ -24,13 +25,13 @@ namespace YtDownloader.Services
         /// <summary>
         /// Tries to download and convert video and return Filename with extension 
         /// </summary>
-        public async Task<Result<VideoInfo, Error>> TryDownloadAsync(string url)
-            => await Task.Run(async () => await this.TryDownload(url));
+        public async Task<Result<VideoInfo, Error>> TryDownloadAsync(string url, ConversionTarget target)
+            => await Task.Run(async () => await this.TryDownload(url, target));
         
         /// <summary>
         /// Tries to download and convert video and return Filename with extension 
         /// </summary>
-        public async Task<Result<VideoInfo, Error>> TryDownload(string url)
+        public async Task<Result<VideoInfo, Error>> TryDownload(string url, ConversionTarget target)
         {
             await Task.Yield(); // Force a new thread.
             
@@ -63,7 +64,7 @@ namespace YtDownloader.Services
                 return new Result<VideoInfo, Error>(new Error("Failed to download video"));
             ytDlProc.WaitForExit();
 
-            string fileName = $"{~ytId}.mp3";
+            string fileName = PathHelper.GenerateExtensionOnFilename(~ytId, target);
             string filePath = PathHelper.GenerateFilePath(fileName);
             if (!File.Exists(filePath))
             {
