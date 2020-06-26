@@ -4,9 +4,11 @@ using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
 using ArgonautCore.Lw;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using YtDownloader.Dtos;
 using YtDownloader.Helper;
+using YtDownloader.Models;
 using YtDownloader.Models.Enums;
 
 namespace YtDownloader.Services
@@ -93,6 +95,26 @@ namespace YtDownloader.Services
             _cacheService.TryAddFile(fileName, videoInfo);
 
             return videoInfo;
+        }
+
+        public async Task<Result<VideoJson, Error>> GetYoutubeJsonData(string url)
+        {
+            await Task.Yield(); // Force a new thread.
+            
+            url = CleanYtLink(url);
+            
+            var jsonCheck = YtJsonDownload(url);
+            using var ytJsonProc = Process.Start(jsonCheck);
+            if (ytJsonProc == null)
+                return new Result<VideoJson, Error>(new Error("Failed to fetch YT Json data."));
+
+            string rawJson = await ytJsonProc.StandardOutput.ReadToEndAsync();
+            ytJsonProc.WaitForExit();
+            if (ytJsonProc.ExitCode != 0) 
+                return new Result<VideoJson, Error>(new Error("Failed to fetch YT Json data."));
+
+            var videoJson = JsonConvert.DeserializeObject<VideoJson>(rawJson);
+            return videoJson;
         }
 
         private static string CleanYtLink(string url)

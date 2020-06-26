@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using YtDownloader.Dtos;
+using YtDownloader.Models;
 using YtDownloader.Services;
 
 namespace YtDownloader.Controllers
@@ -17,6 +18,20 @@ namespace YtDownloader.Controllers
         {
             _downloaderService = downloaderService;
             _metaDataService = metaDataService;
+        }
+
+        [HttpGet("json")]
+        public async Task<ActionResult<VideoJson>> GetVideoJson(string ytUrl)
+        {
+            if (!Uri.IsWellFormedUriString(ytUrl, UriKind.RelativeOrAbsolute))
+                return BadRequest("Url must be well formed Uri string");
+
+            var data = await _downloaderService.GetYoutubeJsonData(ytUrl);
+
+            if (data.HasError)
+                return BadRequest(data.Err().Message.Get());
+
+            return Ok(data.Some());
         }
         
         [HttpPost]
