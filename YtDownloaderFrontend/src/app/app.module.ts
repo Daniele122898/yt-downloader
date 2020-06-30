@@ -12,6 +12,9 @@ import {MatFormFieldModule} from '@angular/material/form-field';
 import {MatInputModule} from '@angular/material/input';
 import {MatProgressSpinnerModule} from '@angular/material/progress-spinner';
 import {MatProgressBarModule} from '@angular/material/progress-bar';
+import {MatIconModule} from '@angular/material/icon';
+import {MatMenuModule} from '@angular/material/menu';
+import {MatSelectModule} from '@angular/material/select';
 
 @NgModule({
   declarations: [
@@ -31,6 +34,9 @@ import {MatProgressBarModule} from '@angular/material/progress-bar';
     MatInputModule,
     MatProgressSpinnerModule,
     MatProgressBarModule,
+    MatIconModule,
+    MatMenuModule,
+    MatSelectModule,
   ],
   providers: [],
   bootstrap: [AppComponent]

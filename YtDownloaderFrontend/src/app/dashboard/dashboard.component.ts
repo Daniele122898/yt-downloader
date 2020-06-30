@@ -20,6 +20,12 @@ export class DashboardComponent implements OnInit {
   public converting = false;
   public conversionResult: ConversionResult;
   public downloadUrl: string;
+  public conversionTarget = ConversionTarget.Mp3;
+
+  public readonly CONVERSION_TARGET_MP3 = ConversionTarget.Mp3;
+  public readonly CONVERSION_TARGET_MP4 = ConversionTarget.Mp4;
+
+  public readonly QUALITIES = [1080, 720, 480];
 
   private baseUrl = environment.apiUrl;
 
@@ -32,7 +38,20 @@ export class DashboardComponent implements OnInit {
     this.createForm();
   }
 
+  public getOptionsConversionString(): string {
+    switch (this.conversionTarget) {
+      case ConversionTarget.Mp3:
+        return 'Convert to MP4';
+      case ConversionTarget.Mp4:
+        return 'Convert to MP3';
+    }
+  }
+
   public onYoutubeSearch(): void {
+    if (this.fetching || !this.youtubeUrl) {
+      return;
+    }
+
     this.fetching = true;
     this.clearFormAndData();
 
@@ -46,6 +65,14 @@ export class DashboardComponent implements OnInit {
         console.log(err);
         this.fetching = false;
       });
+  }
+
+  public toggleConversion(): void {
+    if (this.conversionTarget === ConversionTarget.Mp3) {
+      this.conversionTarget = ConversionTarget.Mp4;
+    } else {
+      this.conversionTarget = ConversionTarget.Mp3;
+    }
   }
 
   public convertVideo(): void {
@@ -86,6 +113,7 @@ export class DashboardComponent implements OnInit {
     this.convertForm = this.fb.group({
       title: ['', Validators.required],
       artist: [''],
+      quality: [this.QUALITIES[1]],
     });
   }
 }

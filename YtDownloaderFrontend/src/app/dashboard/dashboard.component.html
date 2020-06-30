@@ -10,7 +10,7 @@
         <div class="search-bar__icon">
           <fa-icon [icon]="faSearch"></fa-icon>
         </div>
-        <input type="text" [(ngModel)]="youtubeUrl">
+        <input type="text" [(ngModel)]="youtubeUrl" (keydown.enter)="onYoutubeSearch()">
       </div>
     </div>
 
@@ -38,13 +38,29 @@
       <div class="card-flex__item">
         <img src="{{videoJson.thumbnailUrl}}" alt="">
       </div>
-      <div class="card-flex__item" style="width: 100%">
+      <div class="card-flex__item" style="width: 100%; max-width: 100%">
 
         <div class="card-flex__content">
           <div>
-            <div>
-              <mat-card-title>Edit Metadata</mat-card-title>
-              <mat-card-subtitle>You can change the title and artist that has been fetched from Youtube</mat-card-subtitle>
+            <div class="card-flex__content-header">
+              <div>
+                <mat-card-title>Edit Metadata</mat-card-title>
+                <mat-card-subtitle>You can change the title and artist that has been fetched from Youtube</mat-card-subtitle>
+              </div>
+              <button
+                mat-icon-button
+                aria-label="Options button"
+                class="option-button"
+                [matMenuTriggerFor]="menu">
+                <mat-icon>more_vert</mat-icon>
+              </button>
+              <mat-menu #menu="matMenu" xPosition="before">
+                <button
+                  mat-menu-item
+                  (click)="toggleConversion()">
+                  {{this.getOptionsConversionString()}}
+                </button>
+              </mat-menu>
             </div>
 
             <mat-card-content>
@@ -55,10 +71,27 @@
                   <mat-error *ngIf="convertForm.get('title').errors">You must enter a title</mat-error>
                 </mat-form-field>
 
-                <mat-form-field appearance="standard" class="long-input">
+                <mat-form-field
+                  appearance="standard"
+                  class="long-input"
+                  *ngIf="this.conversionTarget == CONVERSION_TARGET_MP3">
                   <mat-label>Artist(s)</mat-label>
                   <input type="text" matInput formControlName="artist">
                 </mat-form-field>
+
+                <mat-form-field
+                  appearance="standard"
+                  class="long-input"
+                  *ngIf="this.conversionTarget == CONVERSION_TARGET_MP4">
+                  <mat-label>Quality</mat-label>
+                  <mat-select formControlName="quality">
+                    <mat-option *ngFor="let quality of QUALITIES"
+                                value="{{quality}}">
+                      {{quality + 'p'}}
+                    </mat-option>
+                  </mat-select>
+                </mat-form-field>
+
               </form>
             </mat-card-content>
           </div>

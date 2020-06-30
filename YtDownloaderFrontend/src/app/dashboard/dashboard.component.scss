@@ -1,3 +1,7 @@
+$display-breakpoint: 1000px;
+$display-margin-shrink-1: 1800px;
+$display-margin-shrink-2: 1400px;
+
 .long-input {
   width: 100%;
 }
@@ -6,15 +10,41 @@
   width: 60%;
   margin: 0 auto;
 
+  @media (max-width: $display-margin-shrink-1) {
+    width: 75%;
+  }
+
+  @media (max-width: $display-margin-shrink-2) {
+    width: 85%;
+  }
+
+  @media (max-width: $display-breakpoint) {
+    width: 75%;
+  }
+
+
   > .card-flex {
     display: flex;
     flex-direction: row;
+
+    @media (max-width: $display-breakpoint) {
+      flex-direction: column;
+    }
 
     .card-flex__item {
       display: flex;
       flex-direction: column;
       max-width: 50%;
       height: auto;
+
+      @media (max-width: $display-breakpoint) {
+        width: 100%;
+        max-width: 100%;
+
+        &:first-child {
+          margin-bottom: 1rem;
+        }
+      }
 
       > .card-flex__content{
         display: flex;
@@ -26,12 +56,28 @@
         form {
           width: 100%;
         }
+
+        .card-flex__content-header {
+          display: flex;
+          flex-direction: row;
+          justify-content: space-between;
+
+          .option-button {
+            left: 20px;
+          }
+        }
       }
 
       img {
         border-radius: 4px;
         width: 100%;
         height: auto;
+
+        @media (max-width: $display-breakpoint) {
+          //padding: 0 2rem;
+          width: calc(100% - 4rem);
+          margin: 0 auto;
+        }
       }
     }
   }
