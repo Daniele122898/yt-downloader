@@ -33,13 +33,13 @@ namespace YtDownloader.Services
         /// <summary>
         /// Tries to download and convert video and return Filename with extension 
         /// </summary>
-        public async Task<Result<VideoInfo, Error>> TryDownloadAsync(string url, ConversionTarget target)
-            => await Task.Run(async () => await this.TryDownload(url, target));
+        public async Task<Result<VideoInfo, Error>> TryDownloadAsync(string url, ConversionTarget target, uint quality = 720)
+            => await Task.Run(async () => await this.TryDownload(url, target, quality));
         
         /// <summary>
         /// Tries to download and convert video and return Filename with extension 
         /// </summary>
-        public async Task<Result<VideoInfo, Error>> TryDownload(string url, ConversionTarget target)
+        public async Task<Result<VideoInfo, Error>> TryDownload(string url, ConversionTarget target, uint quality = 720)
         {
             await Task.Yield(); // Force a new thread.
             
@@ -67,7 +67,7 @@ namespace YtDownloader.Services
             if (jsonDict.ContainsKey("is_live") && !string.IsNullOrWhiteSpace(jsonDict["is_live"].Value<string>()))
                 return new Result<VideoInfo, Error>(new Error("Livestreams are not allowed"));
 
-            var ytdlInfo = YtDl(url, ~ytId, target);
+            var ytdlInfo = YtDl(url, ~ytId, target, quality);
             using var ytDlProc = Process.Start(ytdlInfo);
             if (ytDlProc == null)
                 return new Result<VideoInfo, Error>(new Error("Failed to download video"));
@@ -139,21 +139,21 @@ namespace YtDownloader.Services
             return Option.None<string>();
         }
 
-        private ProcessStartInfo YtDl(string url, string name, ConversionTarget target)
+        private ProcessStartInfo YtDl(string url, string name, ConversionTarget target, uint quality)
             => new ProcessStartInfo()
             {
                 FileName = _YT_DL_PATH,
-                Arguments = GenerateArgumentList(url, name, target)
+                Arguments = GenerateArgumentList(url, name, target, quality)
             };
 
-        private string GenerateArgumentList(string url, string name, ConversionTarget target, string res = "720")
+        private string GenerateArgumentList(string url, string name, ConversionTarget target, uint res = 720)
             => target switch
             {
                 ConversionTarget.Mp3 =>
                 $"-i -x --no-playlist --max-filesize 100m --audio-format mp3 --audio-quality 0 " +
                 $"--output \"{PathHelper.OutputPath}/{name}.%(ext)s\"  {url} --ffmpeg-location {_FFMPEG_PATH}",
 
-                ConversionTarget.Mp4 => $"-f \"bestvideo[height<=?{res}][fps<=?60][vcodec!=?vp9]+bestaudio/best\" -i --no-playlist --max-filesize 500m " +
+                ConversionTarget.Mp4 => $"-f \"bestvideo[height<=?{res.ToString()}][fps<=?60][vcodec!=?vp9]+bestaudio/best\" -i --no-playlist --max-filesize 500m " +
                                         $"--audio-quality 0 --recode-video mp4 --output \"{PathHelper.OutputPath}/{name}.%(ext)s\" {url} " +
                                         $"--ffmpeg-location \"{_FFMPEG_PATH}\" --postprocessor-args \"-threads {_cpuEncodeProcUsed}\"",
                 

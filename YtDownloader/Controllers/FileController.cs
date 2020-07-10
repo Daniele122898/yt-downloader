@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System.IO;
+using Microsoft.AspNetCore.Mvc;
 using YtDownloader.Helper;
 using YtDownloader.Services;
 
@@ -23,15 +24,32 @@ namespace YtDownloader.Controllers
                 return NotFound();
 
             string path = PathHelper.GenerateFilePath(videoInfo.FileName);
-            string fileName = _metaDataService.ConstructFilenameFromMetadata(path) ?? videoInfo.FileName;
+            string extension = Path.GetExtension(fileNameAndExtension);
+            string fileName = _metaDataService.ConstructFilenameFromMetadata(path, extension) ?? videoInfo.FileName;
 
             var cd = new System.Net.Mime.ContentDisposition
             {
-                FileName = fileName,
+                // FileName = WebUtility.UrlEncode(fileName),
+                FileName = ToValidASCIIString(fileName),
                 Inline = false, // Have it as attachment to force the browser to download it
             };
             Response.Headers.Add("Content-Disposition", cd.ToString());
             return PhysicalFile(PathHelper.GenerateFilePath(videoInfo.FileName), "audio/mpeg");
+        }
+
+        private static string ToValidASCIIString(string fileName)
+        {
+            string asciiString = "";
+            foreach (var c in fileName)
+            {
+                // ReSharper disable once RedundantCast
+                if ((int) c < 128)
+                    asciiString += c;
+                else
+                    asciiString += '_';
+            }
+
+            return asciiString;
         }
     }
 }

@@ -12,6 +12,7 @@ export enum ConversionTarget {
 export interface MetaDataInfo {
   title: string;
   artists?: string;
+  quality?: number;
 }
 
 export interface ConversionResult {

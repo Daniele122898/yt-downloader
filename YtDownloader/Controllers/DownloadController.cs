@@ -39,8 +39,13 @@ namespace YtDownloader.Controllers
         {
             if (!Uri.IsWellFormedUriString(downloadRequestDto.Url, UriKind.RelativeOrAbsolute))
                 return BadRequest("Url must be well formed Uri string");
+
+            uint quality = downloadRequestDto.MetaDataInfo?.Quality ?? 720;
+
+            if (!IsValidQuality(quality))
+                return BadRequest("Invalid Video Quality setting");
                 
-            var res = await _downloaderService.TryDownloadAsync(downloadRequestDto.Url, downloadRequestDto.ConversionTarget);
+            var res = await _downloaderService.TryDownloadAsync(downloadRequestDto.Url, downloadRequestDto.ConversionTarget, quality);
             if (res.HasError)
                 return BadRequest(res.Err().Message.Get());
 
@@ -51,6 +56,21 @@ namespace YtDownloader.Controllers
 
             return CreatedAtRoute("GetFile", 
                 new {controller = "File", fileNameAndExtension = videoInfo.FileName}, videoInfo);
+        }
+
+        private static bool IsValidQuality(uint quality)
+        {
+            switch (quality)
+            {
+                case 1080:
+                case 720:
+                case 480:
+                case 360:
+                case 144:
+                    return true;
+                default:
+                    return false;
+            }
         }
     }
 }

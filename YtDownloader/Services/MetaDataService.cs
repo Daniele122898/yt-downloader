@@ -88,17 +88,13 @@ namespace YtDownloader.Services
             return tFile.Tag.Title;
         }
 
-        public string ConstructFilenameFromMetadata(string path)
+        public string ConstructFilenameFromMetadata(string path, string extension)
         {
             string name = this.GetFileTitleFromMetadata(path);
             if (string.IsNullOrWhiteSpace(name))
                 return null;
-            
-            using var tFile = TagLib.File.Create(path);
-            if (tFile.MimeType.Contains("video"))
-                return name + ".mp4";
-            else
-                return name + ".mp3";
+
+            return name + extension;
         }
     }
 }

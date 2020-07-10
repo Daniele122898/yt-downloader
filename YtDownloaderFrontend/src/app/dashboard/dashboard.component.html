@@ -84,7 +84,7 @@
                   class="long-input"
                   *ngIf="this.conversionTarget == CONVERSION_TARGET_MP4">
                   <mat-label>Quality</mat-label>
-                  <mat-select formControlName="quality">
+                  <mat-select formControlName="quality" #matSelect>
                     <mat-option *ngFor="let quality of QUALITIES"
                                 value="{{quality}}">
                       {{quality + 'p'}}

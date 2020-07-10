@@ -22,13 +22,20 @@ export class YtdlService {
     });
   }
 
-  public convertVideo(url: string, conversionTarget: ConversionTarget, title: string, artists?: string): Observable<ConversionResult> {
+  public convertVideo(
+    url: string,
+    conversionTarget: ConversionTarget,
+    title: string,
+    artists?: string,
+    quality?: number): Observable<ConversionResult> {
+
     const bod: VideoConversion = {
       url,
       conversionTarget,
       metaDataInfo: {
         title,
-        artists
+        artists,
+        quality
       }
     };
     return this.http.post<ConversionResult>(this.baseUrl + 'api/download', bod);

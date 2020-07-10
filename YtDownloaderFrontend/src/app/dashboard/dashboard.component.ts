@@ -1,4 +1,4 @@
-import {Component, OnInit} from '@angular/core';
+import {Component, ElementRef, OnInit, ViewChild} from '@angular/core';
 import {faSearch} from '@fortawesome/free-solid-svg-icons';
 import {YtdlService} from './services/ytdl.service';
 import {VideoJson} from '../models/VideoJson';
@@ -25,7 +25,7 @@ export class DashboardComponent implements OnInit {
   public readonly CONVERSION_TARGET_MP3 = ConversionTarget.Mp3;
   public readonly CONVERSION_TARGET_MP4 = ConversionTarget.Mp4;
 
-  public readonly QUALITIES = [1080, 720, 480];
+  public readonly QUALITIES = [1080, 720, 480, 360, 144];
 
   private baseUrl = environment.apiUrl;
 
@@ -85,9 +85,10 @@ export class DashboardComponent implements OnInit {
 
     this.ytdlService.convertVideo(
       this.youtubeUrl,
-      ConversionTarget.Mp3,
+      this.conversionTarget,
       this.convertForm.get('title').value,
-      this.convertForm.get('artist').value)
+      this.convertForm.get('artist').value,
+      Number(this.convertForm.get('quality').value))
       .subscribe((res) => {
         this.conversionResult = res;
         this.converting = false;
@@ -99,7 +100,7 @@ export class DashboardComponent implements OnInit {
   }
 
   private clearFormAndData(): void {
-    this.convertForm.reset();
+    this.convertForm.reset({quality: this.QUALITIES[1]});
     this.videoJson = undefined;
     this.conversionResult = undefined;
   }
