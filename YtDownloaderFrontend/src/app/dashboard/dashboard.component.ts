@@ -57,7 +57,6 @@ export class DashboardComponent implements OnInit {
 
     this.ytdlService.getVideoJson(this.youtubeUrl)
       .subscribe((videoJson) => {
-        console.log(videoJson);
         this.videoJson = videoJson;
         this.populateForm();
         this.fetching = false;
