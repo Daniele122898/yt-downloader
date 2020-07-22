@@ -106,14 +106,13 @@ namespace YtDownloader
             app.UseRouting();
             
             // Add support for static files. Ordering is important
-            // TODO uncomment when static files are there :)
-            // app.UseDefaultFiles(); // search index.html in wwwroot
-            // app.UseStaticFiles();
+            app.UseDefaultFiles(); // search index.html in wwwroot
+            app.UseStaticFiles();
 
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
-                // endpoints.MapFallbackToController("Index", "Fallback"); // Use our fallback
+                endpoints.MapFallbackToController("Index", "Fallback"); // Use our fallback
             });
         }
     }
