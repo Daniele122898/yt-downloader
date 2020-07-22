@@ -1,0 +1,117 @@
+<div>
+  <div class="header">
+    <h1>YouTube Converter</h1>
+    <p>Fast, easy and high quality</p>
+  </div>
+
+  <div class="search">
+    <div class="search-bar">
+      <div class="search-bar__padder">
+        <div class="search-bar__icon">
+          <fa-icon [icon]="faSearch"></fa-icon>
+        </div>
+        <input type="text" [(ngModel)]="youtubeUrl" (keydown.enter)="onYoutubeSearch()">
+      </div>
+    </div>
+
+    <button
+      mat-raised-button color="primary"
+      style="margin-top: 1.5rem"
+      [disabled]="!youtubeUrl"
+      (click)="onYoutubeSearch()"
+      *ngIf="!fetching"
+    >
+      Search
+    </button>
+
+    <mat-progress-spinner
+      style="margin-top: 1.5rem;"
+      *ngIf="fetching"
+      color="primary"
+      mode="indeterminate"
+      diameter="40">
+    </mat-progress-spinner>
+  </div>
+
+  <div *ngIf="videoJson" class="card-content">
+    <mat-card class="card-flex">
+      <div class="card-flex__item">
+        <img src="{{videoJson.thumbnailUrl}}" alt="">
+      </div>
+      <div class="card-flex__item" style="width: 100%; max-width: 100%">
+
+        <div class="card-flex__content">
+          <div>
+            <div class="card-flex__content-header">
+              <div>
+                <mat-card-title>Edit Metadata</mat-card-title>
+                <mat-card-subtitle>You can change the title and artist that has been fetched from Youtube</mat-card-subtitle>
+              </div>
+              <button
+                mat-icon-button
+                aria-label="Options button"
+                class="option-button"
+                [matMenuTriggerFor]="menu">
+                <mat-icon>more_vert</mat-icon>
+              </button>
+              <mat-menu #menu="matMenu" xPosition="before">
+                <button
+                  mat-menu-item
+                  (click)="toggleConversion()">
+                  {{this.getOptionsConversionString()}}
+                </button>
+              </mat-menu>
+            </div>
+
+            <mat-card-content>
+              <form [formGroup]="convertForm" (ngSubmit)="convertVideo()">
+                <mat-form-field appearance="standard" class="long-input">
+                  <mat-label>Title</mat-label>
+                  <input type="text" matInput formControlName="title">
+                  <mat-error *ngIf="convertForm.get('title').errors">You must enter a title</mat-error>
+                </mat-form-field>
+
+                <mat-form-field
+                  appearance="standard"
+                  class="long-input"
+                  *ngIf="this.conversionTarget == CONVERSION_TARGET_MP3">
+                  <mat-label>Artist(s)</mat-label>
+                  <input type="text" matInput formControlName="artist">
+                </mat-form-field>
+
+                <mat-form-field
+                  appearance="standard"
+                  class="long-input"
+                  *ngIf="this.conversionTarget == CONVERSION_TARGET_MP4">
+                  <mat-label>Quality</mat-label>
+                  <mat-select formControlName="quality" #matSelect>
+                    <mat-option *ngFor="let quality of QUALITIES"
+                                value="{{quality}}">
+                      {{quality + 'p'}}
+                    </mat-option>
+                  </mat-select>
+                </mat-form-field>
+
+              </form>
+            </mat-card-content>
+          </div>
+
+          <mat-card-actions>
+            <button mat-flat-button (click)="convertVideo()" [disabled]="!convertForm.valid || converting">
+              Convert
+            </button>
+            <a href="{{downloadUrl}}">
+              <button mat-flat-button color="primary" *ngIf="conversionResult">
+                Download
+              </button>
+            </a>
+          </mat-card-actions>
+        </div>
+
+      </div>
+    </mat-card>
+
+    <mat-progress-bar mode="indeterminate" *ngIf="converting"></mat-progress-bar>
+
+  </div>
+</div>
