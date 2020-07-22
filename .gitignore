@@ -8,7 +8,6 @@
 *.user
 *.userosscache
 *.sln.docstates
-*.json
 *.exe
 *.dll
 *.opus
@@ -23,6 +22,8 @@
 
 **/OutputFiles
 
+
+**/appsettings**
 !**/appsettings.Example.json
 
 # User-specific files (MonoDevelop/Xamarin Studio)
