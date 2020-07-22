@@ -23,6 +23,8 @@
 
 **/OutputFiles
 
+!**/appsettings.Example.json
+
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
 
