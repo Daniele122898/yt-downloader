@@ -33,22 +33,25 @@ namespace YtDownloader.Services
         /// <summary>
         /// Tries to download and convert video and return Filename with extension 
         /// </summary>
-        public async Task<Result<VideoInfo, Error>> TryDownloadAsync(string url, ConversionTarget target, uint quality = 720)
+        public async Task<Result<VideoInfo, Error>> TryDownloadAsync(string url, ConversionTarget target, uint? quality = null)
             => await Task.Run(async () => await this.TryDownload(url, target, quality));
         
         /// <summary>
         /// Tries to download and convert video and return Filename with extension 
         /// </summary>
-        public async Task<Result<VideoInfo, Error>> TryDownload(string url, ConversionTarget target, uint quality = 720)
+        public async Task<Result<VideoInfo, Error>> TryDownload(string url, ConversionTarget target, uint? quality = null)
         {
             await Task.Yield(); // Force a new thread.
+            
+            if (target == ConversionTarget.Mp4 && !quality.HasValue)
+                return new Result<VideoInfo, Error>(new Error("Quality cannot be null if conversion target is mp4!"));
             
             url = CleanYtLink(url);
             var ytId = GetYoutubeId(url);
             if (!ytId)
                 return new Result<VideoInfo, Error>(new Error("Not a valid YT link"));
             
-            string fileName = PathHelper.GenerateExtensionOnFilename(~ytId, target);
+            string fileName = PathHelper.GenerateExtensionOnFilename(~ytId, target, quality);
             // Check Cache first
             if (_cacheService.TryGetFile(fileName, out var cachedVideoInfo))
                 return new Result<VideoInfo, Error>(cachedVideoInfo);
@@ -67,7 +70,7 @@ namespace YtDownloader.Services
             if (jsonDict.ContainsKey("is_live") && !string.IsNullOrWhiteSpace(jsonDict["is_live"].Value<string>()))
                 return new Result<VideoInfo, Error>(new Error("Livestreams are not allowed"));
 
-            var ytdlInfo = YtDl(url, ~ytId, target, quality);
+            var ytdlInfo = YtDl(url, ~ytId, target, quality.Value);
             using var ytDlProc = Process.Start(ytdlInfo);
             if (ytDlProc == null)
                 return new Result<VideoInfo, Error>(new Error("Failed to download video"));
@@ -76,11 +79,12 @@ namespace YtDownloader.Services
             string filePath = PathHelper.GenerateFilePath(fileName);
             if (!File.Exists(filePath))
             {
-                var files = Directory.GetFiles(PathHelper.OutputPath, $"*{~ytId}*");
-                foreach (var file in files)
-                {
-                    File.Delete(file);
-                }
+                // TODO get a better cleanup method since this doesnt work but we do need cleanup!
+                // var files = Directory.GetFiles(PathHelper.OutputPath, $"*{~ytId}*");
+                // foreach (var file in files)
+                // {
+                //     File.Delete(file);
+                // }
                 return new Result<VideoInfo, Error>(new Error("Failed to download video"));
             }
             string videoTitle = jsonDict["title"].Value<string>();
@@ -154,7 +158,7 @@ namespace YtDownloader.Services
                 $"--output \"{PathHelper.OutputPath}/{name}.%(ext)s\"  {url} --ffmpeg-location {_FFMPEG_PATH}",
 
                 ConversionTarget.Mp4 => $"-f \"bestvideo[height<=?{res.ToString()}][fps<=?60][vcodec!=?vp9]+bestaudio/best\" -i --no-playlist --max-filesize 500m " +
-                                        $"--audio-quality 0 --recode-video mp4 --output \"{PathHelper.OutputPath}/{name}.%(ext)s\" {url} " +
+                                        $"--audio-quality 0 --recode-video mp4 --output \"{PathHelper.OutputPath}/{name}_{res.ToString()}.%(ext)s\" {url} " +
                                         $"--ffmpeg-location \"{_FFMPEG_PATH}\" --postprocessor-args \"-threads {_cpuEncodeProcUsed}\"",
                 
                 _ => throw new ArgumentException($"Enum {nameof(target)} out of range.")

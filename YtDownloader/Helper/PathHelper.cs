@@ -25,12 +25,13 @@ namespace YtDownloader.Helper
             return fileNameWithExt.Remove(ind);
         }
 
-        public static string GenerateExtensionOnFilename(string filename, ConversionTarget target)
+        public static string GenerateExtensionOnFilename(string filename, ConversionTarget target, uint? quality = null)
             => target switch
             {
                 ConversionTarget.Mp3 => $"{filename}.mp3",
-                ConversionTarget.Mp4 => $"{filename}.mp4",
-                _                    => throw new ArgumentException($"Not handled {nameof(ConversionTarget)} enum type.")
+                ConversionTarget.Mp4 =>
+                $"{filename}_{(quality.HasValue ? quality.Value.ToString() : throw new ArgumentNullException($"Argument {(nameof(quality))} cannot be null!"))}.mp4",
+                _ => throw new ArgumentException($"Not handled {nameof(ConversionTarget)} enum type.")
             };
     }
 }
