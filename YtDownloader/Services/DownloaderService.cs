@@ -79,12 +79,7 @@ namespace YtDownloader.Services
             string filePath = PathHelper.GenerateFilePath(fileName);
             if (!File.Exists(filePath))
             {
-                // TODO get a better cleanup method since this doesnt work but we do need cleanup!
-                // var files = Directory.GetFiles(PathHelper.OutputPath, $"*{~ytId}*");
-                // foreach (var file in files)
-                // {
-                //     File.Delete(file);
-                // }
+                _cacheService.CleanupFilesNotInCache();
                 return new Result<VideoInfo, Error>(new Error("Failed to download video"));
             }
             string videoTitle = jsonDict["title"].Value<string>();
@@ -97,7 +92,7 @@ namespace YtDownloader.Services
             
             // Add to cache service
             _cacheService.TryAddFile(fileName, videoInfo);
-
+            
             return videoInfo;
         }
 

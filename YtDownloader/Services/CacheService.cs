@@ -37,8 +37,8 @@ namespace YtDownloader.Services
             }
             
             _log.LogInformation("Initializing cleanup timer");
-            _timer = new Timer(CleanupCache, null, TimeSpan.FromMinutes(cleanupCooldownHours), 
-                TimeSpan.FromMinutes(cleanupCooldownHours));
+            _timer = new Timer(CleanupCache, null, TimeSpan.FromHours(cleanupCooldownHours), 
+                TimeSpan.FromHours(cleanupCooldownHours));
         }
         
         private void CleanupCache(object _)
@@ -53,6 +53,16 @@ namespace YtDownloader.Services
                     File.Delete(path);
             }
             _log.LogInformation("Finished file cleanup...");
+        }
+
+        public void CleanupFilesNotInCache()
+        {
+            foreach (var file in Directory.EnumerateFiles(PathHelper.OutputPath))
+            {
+                string fileName = Path.GetFileName(file);
+                if (!_fileMap.ContainsKey(fileName)) 
+                    File.Delete(file);
+            }
         }
 
         public bool TryGetFile(string fileNameWithExtension, out VideoInfo info)
