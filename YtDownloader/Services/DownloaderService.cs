@@ -70,7 +70,7 @@ namespace YtDownloader.Services
             if (jsonDict.ContainsKey("is_live") && !string.IsNullOrWhiteSpace(jsonDict["is_live"].Value<string>()))
                 return new Result<VideoInfo, Error>(new Error("Livestreams are not allowed"));
 
-            var ytdlInfo = YtDl(url, ~ytId, target, quality.HasValue ? quality.Value : 720);
+            var ytdlInfo = YtDl(url, ~ytId, target, quality ?? 720);
             using var ytDlProc = Process.Start(ytdlInfo);
             if (ytDlProc == null)
                 return new Result<VideoInfo, Error>(new Error("Failed to download video"));
