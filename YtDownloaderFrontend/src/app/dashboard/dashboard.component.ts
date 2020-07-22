@@ -73,6 +73,7 @@ export class DashboardComponent implements OnInit {
     } else {
       this.conversionTarget = ConversionTarget.Mp3;
     }
+    this.conversionResult = undefined;
   }
 
   public convertVideo(): void {
@@ -115,6 +116,10 @@ export class DashboardComponent implements OnInit {
       title: ['', Validators.required],
       artist: [''],
       quality: [this.QUALITIES[1]],
+    });
+
+    this.convertForm.valueChanges.subscribe(() => {
+      this.conversionResult = undefined;
     });
   }
 }
