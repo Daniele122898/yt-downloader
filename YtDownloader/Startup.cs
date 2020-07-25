@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
 using YtDownloader.Configurations;
@@ -21,8 +22,11 @@ namespace YtDownloader
 {
     public class Startup
     {
-        public Startup(IConfiguration configuration)
+        private readonly ILogger<Startup> _log;
+
+        public Startup(IConfiguration configuration, ILogger<Startup> log)
         {
+            _log = log;
             Configuration = configuration;
         }
 
@@ -66,6 +70,11 @@ namespace YtDownloader
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env, IOptions<DownloadConfig> downloadConfig)
         {
             string path = Path.Combine(env.ContentRootPath, downloadConfig.Value.OutputPath);
+            if (!Directory.Exists(path))
+            {
+                _log.LogWarning($"Output Path doesn't exist. Creating it at {path}");
+                Directory.CreateDirectory(path);
+            }
             PathHelper.SetOutputPath(path);
 
             app.ApplicationServices.GetRequiredService<CacheService>(); // Warmup service
