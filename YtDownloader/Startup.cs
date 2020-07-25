@@ -22,11 +22,9 @@ namespace YtDownloader
 {
     public class Startup
     {
-        private readonly ILogger<Startup> _log;
 
-        public Startup(IConfiguration configuration, ILogger<Startup> log)
+        public Startup(IConfiguration configuration)
         {
-            _log = log;
             Configuration = configuration;
         }
 
@@ -67,12 +65,12 @@ namespace YtDownloader
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, IOptions<DownloadConfig> downloadConfig)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, IOptions<DownloadConfig> downloadConfig, ILogger<Startup> log)
         {
             string path = Path.Combine(env.ContentRootPath, downloadConfig.Value.OutputPath);
             if (!Directory.Exists(path))
             {
-                _log.LogWarning($"Output Path doesn't exist. Creating it at {path}");
+                log.LogWarning($"Output Path doesn't exist. Creating it at {path}");
                 Directory.CreateDirectory(path);
             }
             PathHelper.SetOutputPath(path);
