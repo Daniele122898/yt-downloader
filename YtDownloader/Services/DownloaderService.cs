@@ -4,8 +4,10 @@ using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
 using ArgonautCore.Lw;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using YtDownloader.Configurations;
 using YtDownloader.Dtos;
 using YtDownloader.Helper;
 using YtDownloader.Models;
@@ -16,12 +18,12 @@ namespace YtDownloader.Services
     public class DownloaderService
     {
         private readonly CacheService _cacheService;
-        private const string _YT_DL_PATH = @".\Binaries\youtube-dl.exe";
-        private const string _FFMPEG_PATH = "./Binaries/ffmpeg.exe";
         private readonly string _cpuEncodeProcUsed;
-        
-        public DownloaderService(CacheService cacheService)
+        private readonly DownloadConfig _config;
+
+        public DownloaderService(CacheService cacheService, IOptions<DownloadConfig> config)
         {
+            _config = config.Value;
             _cacheService = cacheService;
             #if DEBUG
             _cpuEncodeProcUsed = Environment.ProcessorCount.ToString();
@@ -141,7 +143,7 @@ namespace YtDownloader.Services
         private ProcessStartInfo YtDl(string url, string name, ConversionTarget target, uint quality)
             => new ProcessStartInfo()
             {
-                FileName = _YT_DL_PATH,
+                FileName = _config.YtDlPath,
                 Arguments = GenerateArgumentList(url, name, target, quality)
             };
 
@@ -150,20 +152,20 @@ namespace YtDownloader.Services
             {
                 ConversionTarget.Mp3 =>
                 $"-i -x --no-playlist --max-filesize 100m --audio-format mp3 --audio-quality 0 " +
-                $"--output \"{PathHelper.OutputPath}/{name}.%(ext)s\"  {url} --ffmpeg-location {_FFMPEG_PATH}",
+                $"--output \"{PathHelper.OutputPath}/{name}.%(ext)s\"  {url} --ffmpeg-location {_config.FfmpegPath}",
 
                 ConversionTarget.Mp4 => $"-f \"bestvideo[height<=?{res.ToString()}][fps<=?60][vcodec!=?vp9]+bestaudio/best\" -i --no-playlist --max-filesize 500m " +
                                         $"--audio-quality 0 --recode-video mp4 --output \"{PathHelper.OutputPath}/{name}_{res.ToString()}.%(ext)s\" {url} " +
-                                        $"--ffmpeg-location \"{_FFMPEG_PATH}\" --postprocessor-args \"-threads {_cpuEncodeProcUsed}\"",
+                                        $"--ffmpeg-location \"{_config.FfmpegPath}\" --postprocessor-args \"-threads {_cpuEncodeProcUsed}\"",
                 
                 _ => throw new ArgumentException($"Enum {nameof(target)} out of range.")
             };
         
         
-        private static ProcessStartInfo YtJsonDownload(string url)
+        private ProcessStartInfo YtJsonDownload(string url)
             => new ProcessStartInfo()
             {
-                FileName = _YT_DL_PATH,
+                FileName = _config.YtDlPath,
                 Arguments = $"-J --flat-playlist {url}",
                 RedirectStandardOutput = true,
                 UseShellExecute = false
