@@ -98,7 +98,8 @@ $display-margin-shrink-2: 1400px;
       border-color: rgba(223, 225, 229, 0);
     }
 
-    width: 30rem;
+    max-width: 30rem;
+    width: 80%;
     display: flex;
     border: 1px solid #dfe1e5;
     box-shadow: none;
@@ -126,6 +127,10 @@ $display-margin-shrink-2: 1400px;
         outline: none;
         display: flex;
         flex: 100%;
+
+        &::placeholder {
+          color: #9AA0A6;
+        }
       }
     }
   }

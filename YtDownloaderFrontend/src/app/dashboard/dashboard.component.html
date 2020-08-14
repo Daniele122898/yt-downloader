@@ -10,7 +10,7 @@
         <div class="search-bar__icon">
           <fa-icon [icon]="faSearch"></fa-icon>
         </div>
-        <input type="text" [(ngModel)]="youtubeUrl" (keydown.enter)="onYoutubeSearch()">
+        <input type="text" [(ngModel)]="youtubeUrl" (keydown.enter)="onYoutubeSearch()" placeholder="Youtube video url">
       </div>
     </div>
 

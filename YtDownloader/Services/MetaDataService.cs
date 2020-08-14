@@ -8,6 +8,7 @@ using YtDownloader.Helper;
 using YtDownloader.Models;
 using YtDownloader.Models.Enums;
 using File = System.IO.File;
+// ReSharper disable RedundantNameQualifier
 
 namespace YtDownloader.Services
 {
