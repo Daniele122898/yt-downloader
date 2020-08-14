@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace YtDownloader.Controllers
 {
     [ApiController]
-    [Route("[controller]/health")]
+    [Route("api/[controller]")]
     public class HealthController : ControllerBase
     {
         [HttpGet]
