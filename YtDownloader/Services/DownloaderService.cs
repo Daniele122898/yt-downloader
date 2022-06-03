@@ -69,7 +69,8 @@ namespace YtDownloader.Services
                 return new Result<VideoInfo, Error>(new Error("Failed to fetch video JSON info"));
 
             IDictionary<string, JToken> jsonDict = JObject.Parse(output);
-            if (jsonDict.ContainsKey("is_live") && !string.IsNullOrWhiteSpace(jsonDict["is_live"].Value<string>()))
+
+            if (jsonDict.ContainsKey("is_live") && jsonDict["is_live"].Value<bool>())
                 return new Result<VideoInfo, Error>(new Error("Livestreams are not allowed"));
 
             var ytdlInfo = YtDl(url, ~ytId, target, quality ?? 720);
