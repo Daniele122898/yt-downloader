@@ -169,7 +169,7 @@ namespace YtDownloader.Services
                 FileName = _config.YtDlPath,
                 Arguments = $"-J --flat-playlist {url}",
                 RedirectStandardOutput = true,
-                UseShellExecute = true
+                UseShellExecute = false
             };
 
     }

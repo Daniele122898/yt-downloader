@@ -16,6 +16,8 @@
 *.checksums
 *.properties
 
+.vscode/
+
 **/temp
 
 **/logs
