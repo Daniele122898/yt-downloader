@@ -25,11 +25,11 @@ namespace YtDownloader.Services
         {
             _config = config.Value;
             _cacheService = cacheService;
-            #if DEBUG
+#if DEBUG
             _cpuEncodeProcUsed = Environment.ProcessorCount.ToString();
-            #else
+#else
             _cpuEncodeProcUsed = Math.Min(1, Environment.ProcessorCount / 2).ToString();
-            #endif
+#endif
         }
 
         /// <summary>
@@ -37,22 +37,22 @@ namespace YtDownloader.Services
         /// </summary>
         public async Task<Result<VideoInfo, Error>> TryDownloadAsync(string url, ConversionTarget target, uint? quality = null)
             => await Task.Run(async () => await this.TryDownload(url, target, quality));
-        
+
         /// <summary>
         /// Tries to download and convert video and return Filename with extension 
         /// </summary>
         public async Task<Result<VideoInfo, Error>> TryDownload(string url, ConversionTarget target, uint? quality = null)
         {
             await Task.Yield(); // Force a new thread.
-            
+
             if (target == ConversionTarget.Mp4 && !quality.HasValue)
                 return new Result<VideoInfo, Error>(new Error("Quality cannot be null if conversion target is mp4!"));
-            
+
             url = CleanYtLink(url);
             var ytId = GetYoutubeId(url);
             if (!ytId)
                 return new Result<VideoInfo, Error>(new Error("Not a valid YT link"));
-            
+
             string fileName = PathHelper.GenerateExtensionOnFilename(~ytId, target, quality);
             // Check Cache first
             if (_cacheService.TryGetFile(fileName, out var cachedVideoInfo))
@@ -65,7 +65,7 @@ namespace YtDownloader.Services
 
             string output = await ytJsonProc.StandardOutput.ReadToEndAsync();
             ytJsonProc.WaitForExit();
-            if (ytJsonProc.ExitCode != 0) 
+            if (ytJsonProc.ExitCode != 0)
                 return new Result<VideoInfo, Error>(new Error("Failed to fetch video JSON info"));
 
             IDictionary<string, JToken> jsonDict = JObject.Parse(output);
@@ -85,25 +85,25 @@ namespace YtDownloader.Services
                 return new Result<VideoInfo, Error>(new Error("Failed to download video"));
             }
             string videoTitle = jsonDict["title"].Value<string>();
-            
+
             var videoInfo = new VideoInfo()
             {
                 VideoTitle = videoTitle,
                 FileName = fileName
             };
-            
+
             // Add to cache service
             _cacheService.TryAddFile(fileName, videoInfo);
-            
+
             return videoInfo;
         }
 
         public async Task<Result<VideoJson, Error>> GetYoutubeJsonData(string url)
         {
             await Task.Yield(); // Force a new thread.
-            
+
             url = CleanYtLink(url);
-            
+
             var jsonCheck = YtJsonDownload(url);
             using var ytJsonProc = Process.Start(jsonCheck);
             if (ytJsonProc == null)
@@ -111,7 +111,7 @@ namespace YtDownloader.Services
 
             string rawJson = await ytJsonProc.StandardOutput.ReadToEndAsync();
             ytJsonProc.WaitForExit();
-            if (ytJsonProc.ExitCode != 0) 
+            if (ytJsonProc.ExitCode != 0)
                 return new Result<VideoJson, Error>(new Error("Failed to fetch YT Json data."));
 
             var videoJson = JsonConvert.DeserializeObject<VideoJson>(rawJson);
@@ -131,12 +131,12 @@ namespace YtDownloader.Services
             int index = url.IndexOf("&", StringComparison.Ordinal);
             if (index != -1)
                 url = url.Substring(0, index);
-               
+
             if (url.Contains("www.youtube.com/watch?v="))
                 return url.Substring(url.IndexOf("=", StringComparison.Ordinal) + 1).Trim();
             else if (url.Contains("youtu.be/"))
                 return url.Substring(url.LastIndexOf("/", StringComparison.Ordinal) + 1).Trim();
-                
+
             return Option.None<string>();
         }
 
@@ -151,17 +151,17 @@ namespace YtDownloader.Services
             => target switch
             {
                 ConversionTarget.Mp3 =>
-                $"-i -x --no-playlist --max-filesize 100m --audio-format mp3 --audio-quality 0 " +
+                $"-i -x --no-playlist --max-filesize 500m --audio-format mp3 --audio-quality 0 " +
                 $"--output \"{PathHelper.OutputPath}/{name}.%(ext)s\"  {url} --ffmpeg-location {_config.FfmpegPath}",
 
-                ConversionTarget.Mp4 => $"-f \"bestvideo[height<=?{res.ToString()}][fps<=?60][vcodec!=?vp9]+bestaudio/best\" -i --no-playlist --max-filesize 500m " +
+                ConversionTarget.Mp4 => $"-f \"bestvideo[height<=?{res.ToString()}][fps<=?60][vcodec!=?vp9]+bestaudio/best\" -i --no-playlist --max-filesize 1000m " +
                                         $"--audio-quality 0 --recode-video mp4 --output \"{PathHelper.OutputPath}/{name}_{res.ToString()}.%(ext)s\" {url} " +
                                         $"--ffmpeg-location \"{_config.FfmpegPath}\" --postprocessor-args \"-threads {_cpuEncodeProcUsed}\"",
-                
+
                 _ => throw new ArgumentException($"Enum {nameof(target)} out of range.")
             };
-        
-        
+
+
         private ProcessStartInfo YtJsonDownload(string url)
             => new ProcessStartInfo()
             {
