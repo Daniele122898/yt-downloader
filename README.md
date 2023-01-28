@@ -1,5 +1,5 @@
 <p align="center">
-    <img src="https://cdn.argonaut.pw/file/9d5e47a0-fc6d-469e-8348-66ea4255ff38.png" />
+    <img src="https://cdn.argonautdev.ch/file/9d5e47a0-fc6d-469e-8348-66ea4255ff38.png" />
 </p>
 
 # Why?
